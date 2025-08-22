@@ -4,8 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Truck, Clock, MapPin, CheckCircle, Package } from 'lucide-react';
+import { Search, Truck, Clock, MapPin, CheckCircle, Package, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
+import { TrackingService, TrackingResult } from '@/lib/tracking';
+import { useToast } from '@/hooks/use-toast';
 
 const carrierLogos = {
   DHL: '🇩🇪',
@@ -15,53 +17,48 @@ const carrierLogos = {
   EMS: '🇨🇳'
 };
 
-const mockTrackingData = {
-  'DHL123456789': {
-    carrier: 'DHL',
-    status: 'in_transit',
-    statusText: '运输中',
-    origin: '深圳, 中国',
-    destination: '纽约, 美国',
-    estimatedDelivery: '2024-01-25',
-    timeline: [
-      { date: '2024-01-20 14:30', location: '深圳', event: '包裹已发出', status: 'completed' },
-      { date: '2024-01-21 08:15', location: '香港转运中心', event: '到达转运中心', status: 'completed' },
-      { date: '2024-01-22 16:45', location: '飞行中', event: '已发往目的地', status: 'current' },
-      { date: '2024-01-25 (预计)', location: '纽约', event: '预计送达', status: 'pending' }
-    ]
-  },
-  'UPS987654321': {
-    carrier: 'UPS',
-    status: 'delivered',
-    statusText: '已送达',
-    origin: '洛杉矶, 美国',
-    destination: '上海, 中国',
-    estimatedDelivery: '2024-01-22',
-    timeline: [
-      { date: '2024-01-18 10:00', location: '洛杉矶', event: '包裹已发出', status: 'completed' },
-      { date: '2024-01-20 14:30', location: '安克雷奇', event: '转运中心处理', status: 'completed' },
-      { date: '2024-01-21 11:20', location: '上海浦东机场', event: '到达目的地', status: 'completed' },
-      { date: '2024-01-22 15:45', location: '上海', event: '已成功送达', status: 'completed' }
-    ]
-  }
-};
 
 export default function TrackingQuery() {
+  const { toast } = useToast();
   const [trackingNumber, setTrackingNumber] = useState('');
   const [selectedCarrier, setSelectedCarrier] = useState('');
-  const [trackingResult, setTrackingResult] = useState(null);
+  const [trackingResult, setTrackingResult] = useState<TrackingResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchPerformed, setSearchPerformed] = useState(false);
 
   const handleSearch = async () => {
-    if (!trackingNumber.trim()) return;
+    if (!trackingNumber.trim()) {
+      toast({
+        title: "请输入快递单号",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsSearching(true);
-    // 模拟API调用延迟
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    setSearchPerformed(true);
     
-    const result = mockTrackingData[trackingNumber] || null;
-    setTrackingResult(result);
-    setIsSearching(false);
+    try {
+      const result = await TrackingService.getTrackingInfo(trackingNumber, selectedCarrier);
+      setTrackingResult(result);
+      
+      if (!result) {
+        toast({
+          title: "未找到物流信息",
+          description: "请检查快递单号是否正确，或稍后再试",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('查询失败:', error);
+      toast({
+        title: "查询失败",
+        description: "网络错误，请稍后再试",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const getStatusColor = (status) => {
@@ -125,8 +122,9 @@ export default function TrackingQuery() {
               </div>
             </div>
             
-            <div className="text-xs text-muted-foreground">
-              测试单号: DHL123456789, UPS987654321
+            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+              <AlertCircle className="h-3 w-3" />
+              <span>支持实时物流查询，测试单号: DHL123456789, UPS987654321</span>
             </div>
           </CardContent>
         </Card>
@@ -196,11 +194,14 @@ export default function TrackingQuery() {
           </Card>
         )}
 
-        {trackingResult === null && trackingNumber && !isSearching && (
+        {trackingResult === null && searchPerformed && !isSearching && (
           <Card>
             <CardContent className="text-center py-8">
               <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <p className="text-gray-600">未找到该单号的物流信息，请检查单号是否正确</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                如果单号正确，可能是物流公司尚未更新信息，请稍后再试
+              </p>
             </CardContent>
           </Card>
         )}

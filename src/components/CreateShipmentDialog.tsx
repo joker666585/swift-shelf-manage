@@ -58,8 +58,12 @@ export default function CreateShipmentDialog({ open, onOpenChange, onSuccess }: 
   };
 
   const handleSelectAll = (checked: boolean) => {
+    const currentFilteredPackages = filterByOwner === 'all'
+      ? availablePackages
+      : availablePackages.filter(pkg => pkg.owner === filterByOwner);
+    
     if (checked) {
-      setSelectedPackages(new Set(filteredPackages.map(pkg => pkg.id)));
+      setSelectedPackages(new Set(currentFilteredPackages.map(pkg => pkg.id)));
     } else {
       setSelectedPackages(new Set());
     }

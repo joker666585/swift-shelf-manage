@@ -41,7 +41,7 @@ export default function Layout({ children, title }: LayoutProps) {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <Package className="h-8 w-8" />
-              <h1 className="text-xl font-bold">国际快递仓库管理系统</h1>
+              <h1 className="text-xl font-bold">深圳迅翊国际快递仓库管理系统</h1>
             </div>
             {title && (
               <h2 className="text-lg font-medium">{title}</h2>
