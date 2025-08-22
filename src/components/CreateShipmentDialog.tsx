@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,7 @@ export default function CreateShipmentDialog({ open, onOpenChange, onSuccess }: 
   const { toast } = useToast();
   const [availablePackages, setAvailablePackages] = useState<PackageType[]>([]);
   const [selectedPackages, setSelectedPackages] = useState<Set<string>>(new Set());
-  const [filterByOwner, setFilterByOwner] = useState<string>('');
+  const [filterByOwner, setFilterByOwner] = useState<string>('all');
   const [owners, setOwners] = useState<string[]>([]);
   const [recipientInfo, setRecipientInfo] = useState({
     name: '',
@@ -119,9 +120,9 @@ export default function CreateShipmentDialog({ open, onOpenChange, onSuccess }: 
   };
 
   // Filter packages by owner if selected
-  const filteredPackages = filterByOwner 
-    ? availablePackages.filter(pkg => pkg.owner === filterByOwner)
-    : availablePackages;
+  const filteredPackages = filterByOwner === 'all'
+    ? availablePackages
+    : availablePackages.filter(pkg => pkg.owner === filterByOwner);
     
   const selectedPackageData = filteredPackages.filter(pkg => selectedPackages.has(pkg.id));
 
@@ -164,7 +165,7 @@ export default function CreateShipmentDialog({ open, onOpenChange, onSuccess }: 
                       <SelectValue placeholder="全部归属人" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">全部归属人</SelectItem>
+                      <SelectItem value="all">全部归属人</SelectItem>
                       {owners.map(owner => (
                         <SelectItem key={owner} value={owner}>{owner}</SelectItem>
                       ))}
@@ -173,7 +174,7 @@ export default function CreateShipmentDialog({ open, onOpenChange, onSuccess }: 
                 </div>
                 {filteredPackages.length === 0 ? (
                   <p className="text-muted-foreground text-center py-4">
-                    {filterByOwner ? `归属人"${filterByOwner}"没有可发货的快递包裹` : '没有可发货的快递包裹'}
+                    {filterByOwner !== 'all' ? `归属人"${filterByOwner}"没有可发货的快递包裹` : '没有可发货的快递包裹'}
                   </p>
                 ) : (
                   <div className="space-y-2 max-h-64 overflow-y-auto">
