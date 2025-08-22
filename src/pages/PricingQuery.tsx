@@ -30,7 +30,8 @@ export default function PricingQuery() {
     additionalWeight: 0,
     unit: '',
     timeFrame: '',
-    notes: ''
+    notes: '',
+    tierPricing: []
   });
 
   useEffect(() => {
@@ -117,7 +118,8 @@ export default function PricingQuery() {
         additionalWeight: newChannel.additionalWeight || 0,
         unit: newChannel.unit || '',
         timeFrame: newChannel.timeFrame || '',
-        notes: newChannel.notes || ''
+        notes: newChannel.notes || '',
+        tierPricing: newChannel.tierPricing || []
       };
 
       const updatedChannels = [...priceChannels, channel];
@@ -133,7 +135,8 @@ export default function PricingQuery() {
         additionalWeight: 0,
         unit: '',
         timeFrame: '',
-        notes: ''
+        notes: '',
+        tierPricing: []
       });
       setIsAddChannelOpen(false);
     }
@@ -163,7 +166,8 @@ export default function PricingQuery() {
         additionalWeight: 0,
         unit: '',
         timeFrame: '',
-        notes: ''
+        notes: '',
+        tierPricing: []
       });
       setIsAddChannelOpen(false);
     }
@@ -250,11 +254,17 @@ export default function PricingQuery() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-sm font-medium">计费方式</label>
-                        <Input
-                          value={newChannel.billingMethod}
-                          onChange={(e) => setNewChannel({ ...newChannel, billingMethod: e.target.value })}
-                          placeholder="如：首重+续重"
-                        />
+                        <Select value={newChannel.billingMethod} onValueChange={(value) => setNewChannel({ ...newChannel, billingMethod: value })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="选择计费方式" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="首重+续重">首重+续重</SelectItem>
+                            <SelectItem value="重量计费+操作费">重量计费+操作费</SelectItem>
+                            <SelectItem value="阶梯计费">阶梯计费</SelectItem>
+                            <SelectItem value="简单重量计费">简单重量计费</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
                         <label className="text-sm font-medium">首重价格</label>
@@ -290,6 +300,71 @@ export default function PricingQuery() {
                           placeholder="如：3-5工作日"
                         />
                       </div>
+                      {newChannel.billingMethod === '阶梯计费' && (
+                        <div className="space-y-4 col-span-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium">阶梯价格配置</label>
+                            <Button 
+                              type="button" 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                const newTierPricing = [...(newChannel.tierPricing || []), { minWeight: 0, maxWeight: 0, price: 0 }];
+                                setNewChannel({ ...newChannel, tierPricing: newTierPricing });
+                              }}
+                            >
+                              添加阶梯
+                            </Button>
+                          </div>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {newChannel.tierPricing?.map((tier, index) => (
+                              <div key={index} className="grid grid-cols-4 gap-2 p-2 border rounded">
+                                <Input
+                                  type="number"
+                                  placeholder="最小重量"
+                                  value={tier.minWeight}
+                                  onChange={(e) => {
+                                    const updatedTiers = [...(newChannel.tierPricing || [])];
+                                    updatedTiers[index] = { ...tier, minWeight: parseFloat(e.target.value) || 0 };
+                                    setNewChannel({ ...newChannel, tierPricing: updatedTiers });
+                                  }}
+                                />
+                                <Input
+                                  type="number"
+                                  placeholder="最大重量"
+                                  value={tier.maxWeight || ''}
+                                  onChange={(e) => {
+                                    const updatedTiers = [...(newChannel.tierPricing || [])];
+                                    updatedTiers[index] = { ...tier, maxWeight: e.target.value ? parseFloat(e.target.value) : undefined };
+                                    setNewChannel({ ...newChannel, tierPricing: updatedTiers });
+                                  }}
+                                />
+                                <Input
+                                  type="number"
+                                  placeholder="单价/kg"
+                                  value={tier.price}
+                                  onChange={(e) => {
+                                    const updatedTiers = [...(newChannel.tierPricing || [])];
+                                    updatedTiers[index] = { ...tier, price: parseFloat(e.target.value) || 0 };
+                                    setNewChannel({ ...newChannel, tierPricing: updatedTiers });
+                                  }}
+                                />
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    const updatedTiers = newChannel.tierPricing?.filter((_, i) => i !== index) || [];
+                                    setNewChannel({ ...newChannel, tierPricing: updatedTiers });
+                                  }}
+                                >
+                                  删除
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       <div className="space-y-2 col-span-2">
                         <label className="text-sm font-medium">备注</label>
                         <Input
