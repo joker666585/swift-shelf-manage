@@ -188,13 +188,18 @@ export default function CreateShipmentDialog({ open, onOpenChange, onSuccess }: 
                         className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                           selectedPackages.has(pkg.id) ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
                         }`}
-                        onClick={() => handleSelectPackage(pkg.id, !selectedPackages.has(pkg.id))}
+                         onClick={(e) => {
+                           const target = e.target as HTMLElement;
+                           if (e.target === e.currentTarget || target.tagName === 'DIV' || target.tagName === 'SPAN') {
+                             handleSelectPackage(pkg.id, !selectedPackages.has(pkg.id));
+                           }
+                         }}
                       >
-                        <div className="flex items-center space-x-3">
-                          <Checkbox
-                            checked={selectedPackages.has(pkg.id)}
-                            onChange={() => {}} // Handled by parent click
-                          />
+                         <div className="flex items-center space-x-3">
+                           <Checkbox
+                             checked={selectedPackages.has(pkg.id)}
+                             onCheckedChange={(checked) => handleSelectPackage(pkg.id, !!checked)}
+                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                               <span className="font-mono text-sm">{pkg.trackingNumber}</span>
