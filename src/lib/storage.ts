@@ -36,6 +36,12 @@ export interface Shelf {
   currentCount: number;
 }
 
+export interface PriceRange {
+  minWeight: number;
+  maxWeight?: number;
+  price: number;
+}
+
 export interface PriceChannel {
   channel: string;
   country: string;
@@ -46,6 +52,7 @@ export interface PriceChannel {
   unit: string;
   timeFrame: string;
   notes: string;
+  tierPricing?: PriceRange[];
 }
 
 // Storage keys
@@ -193,6 +200,23 @@ export function getPriceChannels(): PriceChannel[] {
       unit: '公斤',
       timeFrame: '7-15工作日',
       notes: '100元/kg+30元操作费'
+    },
+    {
+      channel: '美国亚马逊海运',
+      country: '美国',
+      weightRange: '12-200kg',
+      billingMethod: '阶梯计费',
+      firstWeight: 0,
+      additionalWeight: 0,
+      unit: 'kg',
+      timeFrame: '20-30工作日',
+      notes: '阶梯计费模式',
+      tierPricing: [
+        { minWeight: 12, maxWeight: 20, price: 25 },
+        { minWeight: 21, maxWeight: 50, price: 22 },
+        { minWeight: 51, maxWeight: 100, price: 20 },
+        { minWeight: 101, price: 19 }
+      ]
     }
   ]);
 }

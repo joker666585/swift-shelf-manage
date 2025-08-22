@@ -33,6 +33,11 @@ export default function Settings() {
   const [newStatus, setNewStatus] = useState({ value: '', label: '' });
 
   useEffect(() => {
+    // Load saved settings
+    const savedSettings = localStorage.getItem('system_settings');
+    if (savedSettings) {
+      setSystemSettings(JSON.parse(savedSettings));
+    }
     setTags(getTags());
     setStatuses(getStatuses());
   }, []);
@@ -42,8 +47,14 @@ export default function Settings() {
   };
 
   const saveSettings = () => {
-    localStorage.setItem('system_settings', JSON.stringify(systemSettings));
-    alert('系统设置已保存');
+    try {
+      localStorage.setItem('system_settings', JSON.stringify(systemSettings));
+      // Use toast instead of alert for better UX
+      alert('系统设置已保存成功！');
+    } catch (error) {
+      console.error('保存设置失败:', error);
+      alert('保存设置失败，请重试');
+    }
   };
 
   const handleBackup = () => {

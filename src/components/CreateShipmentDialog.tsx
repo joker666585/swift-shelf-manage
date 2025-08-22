@@ -7,7 +7,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Package, User, X } from 'lucide-react';
+import { Package, User, X, Filter } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getPackages, addShipment, updatePackage, generateId, Package as PackageType } from '@/lib/storage';
 
 interface CreateShipmentDialogProps {
@@ -20,6 +21,8 @@ export default function CreateShipmentDialog({ open, onOpenChange, onSuccess }: 
   const { toast } = useToast();
   const [availablePackages, setAvailablePackages] = useState<PackageType[]>([]);
   const [selectedPackages, setSelectedPackages] = useState<Set<string>>(new Set());
+  const [filterByOwner, setFilterByOwner] = useState<string>('');
+  const [owners, setOwners] = useState<string[]>([]);
   const [recipientInfo, setRecipientInfo] = useState({
     name: '',
     phone: '',
@@ -36,6 +39,10 @@ export default function CreateShipmentDialog({ open, onOpenChange, onSuccess }: 
         pkg.status === 'in_stock' || pkg.status === 'pending'
       );
       setAvailablePackages(packages);
+      
+      // Get unique owners
+      const uniqueOwners = [...new Set(packages.map(pkg => pkg.owner))];
+      setOwners(uniqueOwners);
     }
   }, [open]);
 
@@ -51,7 +58,7 @@ export default function CreateShipmentDialog({ open, onOpenChange, onSuccess }: 
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedPackages(new Set(availablePackages.map(pkg => pkg.id)));
+      setSelectedPackages(new Set(filteredPackages.map(pkg => pkg.id)));
     } else {
       setSelectedPackages(new Set());
     }
@@ -111,7 +118,12 @@ export default function CreateShipmentDialog({ open, onOpenChange, onSuccess }: 
     onSuccess();
   };
 
-  const selectedPackageData = availablePackages.filter(pkg => selectedPackages.has(pkg.id));
+  // Filter packages by owner if selected
+  const filteredPackages = filterByOwner 
+    ? availablePackages.filter(pkg => pkg.owner === filterByOwner)
+    : availablePackages;
+    
+  const selectedPackageData = filteredPackages.filter(pkg => selectedPackages.has(pkg.id));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -135,7 +147,7 @@ export default function CreateShipmentDialog({ open, onOpenChange, onSuccess }: 
                   </span>
                   <div className="flex items-center space-x-2">
                     <Checkbox
-                      checked={availablePackages.length > 0 && availablePackages.every(pkg => selectedPackages.has(pkg.id))}
+                      checked={filteredPackages.length > 0 && filteredPackages.every(pkg => selectedPackages.has(pkg.id))}
                       onCheckedChange={handleSelectAll}
                     />
                     <span className="text-sm">全选</span>
@@ -143,13 +155,29 @@ export default function CreateShipmentDialog({ open, onOpenChange, onSuccess }: 
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {availablePackages.length === 0 ? (
+                {/* Owner Filter */}
+                <div className="mb-4 flex items-center space-x-2">
+                  <Filter className="h-4 w-4" />
+                  <span className="text-sm font-medium">按归属人筛选:</span>
+                  <Select value={filterByOwner} onValueChange={setFilterByOwner}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="全部归属人" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">全部归属人</SelectItem>
+                      {owners.map(owner => (
+                        <SelectItem key={owner} value={owner}>{owner}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {filteredPackages.length === 0 ? (
                   <p className="text-muted-foreground text-center py-4">
-                    没有可发货的快递包裹
+                    {filterByOwner ? `归属人"${filterByOwner}"没有可发货的快递包裹` : '没有可发货的快递包裹'}
                   </p>
                 ) : (
                   <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {availablePackages.map((pkg) => (
+                    {filteredPackages.map((pkg) => (
                       <div
                         key={pkg.id}
                         className={`p-3 border rounded-lg cursor-pointer transition-colors ${

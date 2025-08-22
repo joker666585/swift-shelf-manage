@@ -70,7 +70,17 @@ export default function PricingQuery() {
       }
 
       // 计算运费
-      if (channel.billingMethod.includes('首重+续重')) {
+      if (channel.tierPricing && channel.tierPricing.length > 0) {
+        // 阶梯计费
+        const tier = channel.tierPricing.find(t => 
+          weightNum >= t.minWeight && (!t.maxWeight || weightNum <= t.maxWeight)
+        );
+        if (tier) {
+          finalPrice = weightNum * tier.price;
+        } else {
+          finalPrice = 0;
+        }
+      } else if (channel.billingMethod.includes('首重+续重')) {
         const unit = parseFloat(channel.unit.replace('kg', ''));
         if (weightNum <= unit) {
           finalPrice = channel.firstWeight;
