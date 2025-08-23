@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { getPackages, getShipments } from '@/lib/storage';
+import FuelSurchargeDisplay from '@/components/FuelSurchargeDisplay';
 
 const Index = () => {
   const [stats, setStats] = useState({
@@ -194,6 +195,9 @@ const Index = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Fuel Surcharge Display */}
+        <FuelSurchargeDisplay />
       </div>
     </Layout>
   );

@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Truck, Package, Plus, Eye } from 'lucide-react';
+import { Truck, Package, Plus, Eye, Printer, Download } from 'lucide-react';
 import Layout from '@/components/Layout';
 import CreateShipmentDialog from '@/components/CreateShipmentDialog';
 import { getShipments, Shipment } from '@/lib/storage';
@@ -41,6 +40,112 @@ export default function ShipmentList() {
       case 'delivered': return '已送达';
       default: return status;
     }
+  };
+
+  const handlePrint = (shipment: Shipment) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>发货单 - ${shipment.trackingNumber}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .header { text-align: center; margin-bottom: 30px; }
+              .section { margin-bottom: 20px; }
+              .section h3 { border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background-color: #f2f2f2; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>深圳迅翊国际快递仓库管理系统</h1>
+              <h2>发货单</h2>
+              <p>发货单号: ${shipment.trackingNumber}</p>
+              <p>发货日期: ${new Date(shipment.shipmentDate).toLocaleDateString()}</p>
+            </div>
+            
+            <div class="section">
+              <h3>收件人信息</h3>
+              <p><strong>姓名:</strong> ${shipment.recipient.name}</p>
+              <p><strong>电话:</strong> ${shipment.recipient.phone}</p>
+              <p><strong>邮箱:</strong> ${shipment.recipient.email}</p>
+              <p><strong>地址:</strong> ${shipment.recipient.address}</p>
+              <p><strong>国家:</strong> ${shipment.recipient.country}</p>
+              <p><strong>邮编:</strong> ${shipment.recipient.zipCode}</p>
+            </div>
+            
+            <div class="section">
+              <h3>包裹清单</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>快递单号</th>
+                    <th>归属人</th>
+                    <th>货架位置</th>
+                    <th>重量</th>
+                    <th>标签</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${shipment.packages.map(pkg => `
+                    <tr>
+                      <td>${pkg.trackingNumber}</td>
+                      <td>${pkg.owner}</td>
+                      <td>${pkg.shelf}</td>
+                      <td>${pkg.weight ? pkg.weight + 'kg' : '-'}</td>
+                      <td>${pkg.tags.join(', ')}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="section">
+              <p><strong>总包裹数:</strong> ${shipment.packages.length} 件</p>
+              <p><strong>总重量:</strong> ${shipment.packages.reduce((sum, pkg) => sum + (pkg.weight || 0), 0).toFixed(1)} kg</p>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
+  const handleExport = (shipment: Shipment) => {
+    const csvData = [
+      ['发货单号', shipment.trackingNumber],
+      ['发货日期', new Date(shipment.shipmentDate).toLocaleDateString()],
+      ['收件人姓名', shipment.recipient.name],
+      ['收件人电话', shipment.recipient.phone],
+      ['收件人邮箱', shipment.recipient.email],
+      ['收件人地址', shipment.recipient.address],
+      ['收件人国家', shipment.recipient.country],
+      ['收件人邮编', shipment.recipient.zipCode],
+      [''],
+      ['快递单号', '归属人', '货架位置', '重量', '标签'],
+      ...shipment.packages.map(pkg => [
+        pkg.trackingNumber,
+        pkg.owner,
+        pkg.shelf,
+        pkg.weight ? `${pkg.weight}kg` : '-',
+        pkg.tags.join('; ')
+      ])
+    ];
+
+    const csvContent = csvData.map(row => row.join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `发货单_${shipment.trackingNumber}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -93,14 +198,32 @@ export default function ShipmentList() {
                         发货日期: {new Date(shipment.shipmentDate).toLocaleString()}
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setViewingShipment(shipment)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      查看详情
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setViewingShipment(shipment)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        查看详情
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePrint(shipment)}
+                      >
+                        <Printer className="h-4 w-4 mr-2" />
+                        打印
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleExport(shipment)}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        导出
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
