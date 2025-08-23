@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Truck, Package, Plus, Eye, Printer, Download } from 'lucide-react';
+import { Truck, Package, Plus, Eye, Printer, Download, Send } from 'lucide-react';
 import Layout from '@/components/Layout';
 import CreateShipmentDialog from '@/components/CreateShipmentDialog';
-import { getShipments, Shipment } from '@/lib/storage';
+import { getShipments, Shipment, shipOrder } from '@/lib/storage';
 
 export default function ShipmentList() {
   const { toast } = useToast();
@@ -115,6 +115,15 @@ export default function ShipmentList() {
     }
   };
 
+  const handleShip = (shipment: Shipment) => {
+    shipOrder(shipment.id);
+    loadShipments();
+    toast({
+      title: "发货成功",
+      description: `发货单 ${shipment.trackingNumber} 已发货，相关快递已从库存中移除`,
+    });
+  };
+
   const handleExport = (shipment: Shipment) => {
     const csvData = [
       ['发货单号', shipment.trackingNumber],
@@ -199,6 +208,15 @@ export default function ShipmentList() {
                       </div>
                     </div>
                     <div className="flex space-x-2">
+                      {shipment.status === 'pending' && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleShip(shipment)}
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          发货
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"

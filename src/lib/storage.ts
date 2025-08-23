@@ -130,6 +130,31 @@ export function addShipment(shipment: Shipment): void {
   saveShipments(shipments);
 }
 
+export function updateShipment(id: string, updates: Partial<Shipment>): void {
+  const shipments = getShipments();
+  const index = shipments.findIndex(s => s.id === id);
+  if (index !== -1) {
+    shipments[index] = { ...shipments[index], ...updates };
+    saveShipments(shipments);
+  }
+}
+
+export function shipOrder(shipmentId: string): void {
+  const shipments = getShipments();
+  const shipment = shipments.find(s => s.id === shipmentId);
+  
+  if (shipment && shipment.status === 'pending') {
+    // Update shipment status to shipped
+    updateShipment(shipmentId, { status: 'shipped' });
+    
+    // Remove all packages in this shipment from the package list
+    const packages = getPackages();
+    const packageIdsToRemove = shipment.packages.map(pkg => pkg.id);
+    const remainingPackages = packages.filter(pkg => !packageIdsToRemove.includes(pkg.id));
+    savePackages(remainingPackages);
+  }
+}
+
 // Shelf management
 export function getShelves(): Shelf[] {
   return getFromStorage(STORAGE_KEYS.SHELVES, [
