@@ -8,9 +8,6 @@ export default function TrackingQuery() {
     const script = document.createElement('script');
     script.src = '//www.17track.net/externalcall.js';
     script.async = true;
-    script.onload = () => {
-      console.log('17track script loaded');
-    };
     document.body.appendChild(script);
 
     // 清理函数
@@ -25,12 +22,13 @@ export default function TrackingQuery() {
     };
   }, []);
 
-  const doTrack = () => {
+  // 全局函数，供HTML调用
+  (window as any).doTrack = () => {
     const numInput = document.getElementById("YQNum") as HTMLInputElement;
     const num = numInput?.value;
     
     if (num === "") {
-      alert("请输入您的快递单号");
+      alert("Enter your number.");
       return;
     }
     
@@ -44,7 +42,7 @@ export default function TrackingQuery() {
         // 可选，指定运输商，默认为自动识别
         YQ_Fc: "0",
         // 可选，指定UI语言，默认根据浏览器自动识别
-        YQ_Lang: "cn",
+        YQ_Lang: "en",
         // 必须，指定要查询的单号
         YQ_Num: num
       });
@@ -61,32 +59,33 @@ export default function TrackingQuery() {
           <h1 className="text-2xl font-bold">物流轨迹查询</h1>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="bg-card rounded-lg shadow-sm border p-6">
           <div className="space-y-4">
             <div>
-              <label htmlFor="YQNum" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="YQNum" className="block text-sm font-medium text-foreground mb-2">
                 快递单号
               </label>
               <div className="flex space-x-2">
-                <input
-                  type="text"
-                  id="YQNum"
+                {/* 单号输入框 */}
+                <input 
+                  type="text" 
+                  id="YQNum" 
                   maxLength={50}
                   placeholder="请输入快递单号"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  onKeyPress={(e) => e.key === 'Enter' && doTrack()}
+                  className="flex-1 px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-background text-foreground"
                 />
-                <button
-                  onClick={doTrack}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                >
-                  查询
-                </button>
+                {/* 用于调用脚本方法的按钮 */}
+                <input 
+                  type="button" 
+                  value="TRACK" 
+                  onClick={() => (window as any).doTrack()}
+                  className="px-6 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors cursor-pointer"
+                />
               </div>
             </div>
             
             {/* 用于显示查询结果的容器 */}
-            <div id="YQContainer" className="mt-6 min-h-[400px] border rounded-lg p-4 bg-gray-50"></div>
+            <div id="YQContainer" className="mt-6 min-h-[560px] border border-border rounded-lg p-4 bg-muted"></div>
           </div>
         </div>
       </div>
