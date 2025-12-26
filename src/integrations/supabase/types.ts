@@ -14,7 +14,243 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      owners: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      packages: {
+        Row: {
+          created_at: string
+          entry_time: string
+          id: string
+          notes: string | null
+          owner: string | null
+          shelf: string | null
+          status: Database["public"]["Enums"]["package_status"]
+          tags: string[] | null
+          tracking_number: string
+          updated_at: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string
+          entry_time?: string
+          id?: string
+          notes?: string | null
+          owner?: string | null
+          shelf?: string | null
+          status?: Database["public"]["Enums"]["package_status"]
+          tags?: string[] | null
+          tracking_number: string
+          updated_at?: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string
+          entry_time?: string
+          id?: string
+          notes?: string | null
+          owner?: string | null
+          shelf?: string | null
+          status?: Database["public"]["Enums"]["package_status"]
+          tags?: string[] | null
+          tracking_number?: string
+          updated_at?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
+      price_channels: {
+        Row: {
+          additional_weight: number | null
+          billing_method: string | null
+          channel: string
+          country: string
+          created_at: string
+          first_weight: number | null
+          id: string
+          notes: string | null
+          tier_pricing: Json | null
+          time_frame: string | null
+          unit: string | null
+          updated_at: string
+          weight_range: string | null
+        }
+        Insert: {
+          additional_weight?: number | null
+          billing_method?: string | null
+          channel: string
+          country: string
+          created_at?: string
+          first_weight?: number | null
+          id?: string
+          notes?: string | null
+          tier_pricing?: Json | null
+          time_frame?: string | null
+          unit?: string | null
+          updated_at?: string
+          weight_range?: string | null
+        }
+        Update: {
+          additional_weight?: number | null
+          billing_method?: string | null
+          channel?: string
+          country?: string
+          created_at?: string
+          first_weight?: number | null
+          id?: string
+          notes?: string | null
+          tier_pricing?: Json | null
+          time_frame?: string | null
+          unit?: string | null
+          updated_at?: string
+          weight_range?: string | null
+        }
+        Relationships: []
+      }
+      shelves: {
+        Row: {
+          capacity: number
+          created_at: string
+          current_count: number
+          id: string
+          location: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number
+          created_at?: string
+          current_count?: number
+          id?: string
+          location: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          current_count?: number
+          id?: string
+          location?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shipment_packages: {
+        Row: {
+          created_at: string
+          id: string
+          package_id: string
+          shipment_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          package_id: string
+          shipment_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          package_id?: string
+          shipment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipment_packages_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipment_packages_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "shipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipments: {
+        Row: {
+          created_at: string
+          id: string
+          recipient_address: string
+          recipient_country: string | null
+          recipient_email: string | null
+          recipient_name: string
+          recipient_phone: string | null
+          recipient_zip_code: string | null
+          shipment_date: string
+          status: Database["public"]["Enums"]["shipment_status"]
+          tracking_number: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          recipient_address: string
+          recipient_country?: string | null
+          recipient_email?: string | null
+          recipient_name: string
+          recipient_phone?: string | null
+          recipient_zip_code?: string | null
+          shipment_date?: string
+          status?: Database["public"]["Enums"]["shipment_status"]
+          tracking_number: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          recipient_address?: string
+          recipient_country?: string | null
+          recipient_email?: string | null
+          recipient_name?: string
+          recipient_phone?: string | null
+          recipient_zip_code?: string | null
+          shipment_date?: string
+          status?: Database["public"]["Enums"]["shipment_status"]
+          tracking_number?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +259,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      package_status:
+        | "in_stock"
+        | "out_for_delivery"
+        | "pending"
+        | "delivered"
+        | "signed"
+        | "deleted"
+      shipment_status: "pending" | "shipped" | "delivered"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +393,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      package_status: [
+        "in_stock",
+        "out_for_delivery",
+        "pending",
+        "delivered",
+        "signed",
+        "deleted",
+      ],
+      shipment_status: ["pending", "shipped", "delivered"],
+    },
   },
 } as const
